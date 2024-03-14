@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  web:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "8084:80"
+    volumes:
+      - ./php/websites:/web
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - php
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+  php:
+    image: jamietremaine1/comp3004:comp3004-php
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: comp3004
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+volumes:
+  mysql_data:
+    driver: local
+    
